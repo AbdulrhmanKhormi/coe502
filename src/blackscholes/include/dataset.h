@@ -37,7 +37,7 @@ typedef struct _optionData_t {
 } optionData_t;
 
 optionData_t refDataSet[] = {
-  #include "dataset/optionData.txt"
+  #include "../dataset/optionData.txt"
 };
 
 const int REF_DATASET_SIZE = sizeof(refDataSet) / sizeof(optionData_t);

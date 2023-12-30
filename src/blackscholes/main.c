@@ -48,8 +48,8 @@
 #include "impl/para.h"
 
 /* Include common headers */
-#include "common/types.h"
-#include "common/macros.h"
+#include "../common/types.h"
+#include "../common/macros.h"
 
 /* Include application-specific headers */
 #include "include/types.h"
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--impl") == 0) {
       assert (++i < argc);
       if (strcmp(argv[i], "scalar") == 0) {
-        impl = impl_scalar_ptr  ; impl_str = "scalar";
+        impl = impl_scalar_ptr  ; impl_str = "scalar"      ;
       } else if (strcmp(argv[i], "vec"  ) == 0) {
         impl = impl_vector_ptr  ; impl_str = "vectorized"  ;
       } else if (strcmp(argv[i], "para" ) == 0) {

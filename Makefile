@@ -35,3 +35,17 @@ include template.mk
 -include $(SRC_DIR)/Makefile.mk
 
 .PHONY: clean all
+
+DATA:=
+
+run-scalar:
+	./build/blackscholes -i scalar $(DATA)
+
+run-vec:
+	./build/blackscholes -i vec $(DATA)
+
+run-para:
+	./build/blackscholes -i para $(DATA) -n 4
+
+run-all: run-para run-vec run-scalar
+
