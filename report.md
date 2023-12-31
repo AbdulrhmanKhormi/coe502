@@ -428,8 +428,7 @@ void* impl_vector(void* args)
 
 # 4. pThreads Implementations:
 pThreads is a POSIX standard for threads. It is a set of C programming language types, 
-functions, and constants. pThreads defines a set of types that must be defined in the header
-file <pthread.h>. The pThreads implementation is a multithreading implementation of the black scholes model.
+functions, and constants. The pThreads implementation is a multithreading implementation of the black scholes model.
 It splits the dataset into chunks, and it processes each chunk in a separate thread.
 Also, it computes the trailing elements in the main thread. The elements that are not enough to fill a chunk.
 It extends the scalar implementation to use multiple threads:
@@ -535,8 +534,9 @@ void* impl_parallel(void* args)
 ```
 
 # 4. Results:
-The following table shows the results of the different implementations:
+### The following table shows the results of the different implementations on different datasets on two different machines.
 
+## machine one (11th Gen Intel(R) Core(TM) i7-1165G7 8 threads):
 | Implementation | Time (ns) | Speedup | dataset |
 |----------------|-----------|---------|---------|
 | scalar         | 1208      | 1.0000  | dev     |
@@ -555,19 +555,39 @@ The following table shows the results of the different implementations:
 | vector         | 266044477 | 1.7708  | native  |
 | parallel       | 120517458 | 3.9091  | native  |
 
+## machine two (AMD Ryzen 9 5900X 24 threads):
+| Implementation | Time (ns) | Speedup | dataset |
+|----------------|-----------|---------|---------|
+| scalar         | 966       | 1.0000  | dev     |
+| vector         | 434       | 2.2258  | dev     |
+| parallel       | 506478    | 0.0019  | dev     |
+| scalar         | 121257    | 1.0000  | small   |
+| vector         | 71089     | 1.7057  | small   |
+| parallel       | 539252    | 0.2248  | small   |
+| scalar         | 480121    | 1.0000  | medium  |
+| vector         | 282896    | 1.6971  | medium  |
+| parallel       | 526600    | 0.9117  | medium  |
+| scalar         | 1950527   | 1.0000  | large   |
+| vector         | 1142842   | 1.7067  | large   |
+| parallel       | 597773    | 3.2629  | large   |
+| scalar         | 302045428 | 1.0000  | native  |
+| vector         | 176733424 | 1.7090  | native  |
+| parallel       | 21378723  | 14.1283 | native  |
+
 formula for speedup: speedup = time of scalar implementation / time of implementation
 
 As we can see from the results, the parallel implementation is the fastest implementation in large datasets.
 The vector implementation is the fastest implementation in small datasets.
-The scalar implementation is the slowest implementation in all datasets except the dev dataset.
 Parallel implementation didn't perform well in small datasets, but it performed well in large datasets.
 That is because the overhead of creating threads is very high,
-and it is not worth it in small datasets. 
+and it is not worth it in small datasets. Also, adding more threads will not always improve the performance.
+Because the overhead of creating threads will be higher than the performance improvement.
 The overhead of creating threads is tiny in large datasets, and it is worth it in large datasets.
 The vector implementation performed well in small datasets,
 but it didn't perform as good as parallel implementation in large datasets.
-I think that is because I couldn't vectorize the log function and exp function.
-I think if the vector implementation also vectorized the log function and exp function, it will perform better in large datasets.
+That is because the vector implementation is limited by the size of the vector registers.
+The vector registers are 256 bits, and they can hold 8 floats.
+I think if the vector implementation also vectorized the log function and exp function, it will perform even more better.
 But I couldn't vectorize the log function and exp function because I did not have enough time.
 
 # 4. Conclusion:
@@ -591,7 +611,10 @@ and it will improve the performance of the vector implementation.
 # 5. References
 https://github.com/hawajkm/characterize-microbenchmark.git
 
+
 # 6. Machine and OS Specifications
+
+# machine one
 ## cpu info:
 ```
 Architecture:            x86_64
@@ -640,6 +663,69 @@ Vulnerabilities:
   Spec store bypass:     Mitigation; Speculative Store Bypass disabled via prctl
   Spectre v1:            Mitigation; usercopy/swapgs barriers and __user pointer sanitization
   Spectre v2:            Mitigation; Enhanced / Automatic IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
+  Srbds:                 Not affected
+  Tsx async abort:       Not affected
+```
+
+## OS info:
+```
+Linux fedora 6.6.8-200.fc39.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Dec 21 04:01:49 UTC 2023 x86_64 GNU/Linux
+```
+
+## gcc info:
+```
+gcc (GCC) 13.2.1 20231205 (Red Hat 13.2.1-6)
+Copyright (C) 2023 Free Software Foundation, Inc.
+```
+
+## machine two
+## cpu info:
+```
+Architecture:            x86_64
+  CPU op-mode(s):        32-bit, 64-bit
+  Address sizes:         48 bits physical, 48 bits virtual
+  Byte Order:            Little Endian
+CPU(s):                  24
+  On-line CPU(s) list:   0-23
+Vendor ID:               AuthenticAMD
+  Model name:            AMD Ryzen 9 5900X 12-Core Processor
+    CPU family:          25
+    Model:               33
+    Thread(s) per core:  2
+    Core(s) per socket:  12
+    Socket(s):           1
+    Stepping:            2
+    Frequency boost:     enabled
+    CPU(s) scaling MHz:  52%
+    CPU max MHz:         4950.1948
+    CPU min MHz:         2200.0000
+    BogoMIPS:            7400.17
+    Flags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe
+                          popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2
+                          erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefi
+                         lter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap
+Virtualization features: 
+  Virtualization:        AMD-V
+Caches (sum of all):     
+  L1d:                   384 KiB (12 instances)
+  L1i:                   384 KiB (12 instances)
+  L2:                    6 MiB (12 instances)
+  L3:                    64 MiB (2 instances)
+NUMA:                    
+  NUMA node(s):          1
+  NUMA node0 CPU(s):     0-23
+Vulnerabilities:         
+  Gather data sampling:  Not affected
+  Itlb multihit:         Not affected
+  L1tf:                  Not affected
+  Mds:                   Not affected
+  Meltdown:              Not affected
+  Mmio stale data:       Not affected
+  Retbleed:              Not affected
+  Spec rstack overflow:  Vulnerable: Safe RET, no microcode
+  Spec store bypass:     Mitigation; Speculative Store Bypass disabled via prctl
+  Spectre v1:            Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+  Spectre v2:            Mitigation; Retpolines, IBPB conditional, IBRS_FW, STIBP always-on, RSB filling, PBRSB-eIBRS Not affected
   Srbds:                 Not affected
   Tsx async abort:       Not affected
 ```
