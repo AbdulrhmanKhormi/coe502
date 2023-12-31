@@ -58,7 +58,6 @@ __m256 mm256_NEQ_mask(__m256 a, __m256 b){
 }
 
 __m256 CNDF_simd(__m256 InputX){
-    __mmask8 sign;
 
     __m256 OutputX;
     __m256 xInput;
