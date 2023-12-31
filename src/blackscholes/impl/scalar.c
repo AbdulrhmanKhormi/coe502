@@ -164,12 +164,7 @@ void* impl_scalar(void* args)
         float otype = (tolower(otype_c) == 'p')? 1 : 0;
 
         float value = blackScholes(sptPrice, strike, rate, volatility, otime, otype);
-        printf("%f\n", value);
 
         a->output[i] = value;
-    }
-
-    for (int j = 0; j < a->num_stocks; ++j) {
-        printf("%f\n", a->output[j]);
     }
 }

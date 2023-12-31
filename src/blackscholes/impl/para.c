@@ -25,6 +25,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <sched.h>
 
 #define inv_sqrt_2xPI 0.39894228040143270286
 
@@ -152,7 +153,6 @@ float blackScholes_mimd(float sptprice, float strike, float rate, float volatili
 
 void * parallel(void* args){
     args_t* a = (args_t*) args;
-    float* output = (float*) malloc(sizeof(float) * a->num_stocks);
     for (size_t i = 0; i < a->num_stocks; i++) {
         float sptPrice   = a->sptPrice  [i];
         float strike     = a->strike    [i];
@@ -163,9 +163,8 @@ void * parallel(void* args){
 
         float otype = (tolower(otype_c) == 'p')? 1 : 0;
 
-        output[i] = blackScholes_mimd(sptPrice, strike, rate, volatility, otime, otype);
+        a->output[i] = blackScholes_mimd(sptPrice, strike, rate, volatility, otime, otype);
     }
-    a->output = output;
     return NULL;
 }
 
@@ -174,36 +173,77 @@ void* impl_parallel(void* args)
 {
 
     args_t* a = (args_t*) args;
-    int NUM_THREADS = a->nthreads;
+    /* Get all the arguments */
+    register       float*   output = (float*)(a->output);
+    register const float*   sptPrice = (const float*)(a->sptPrice);
+    register const float*   strike = (const float*)(a->strike);
+    register const float*   rate = (const float*)(a->rate);
+    register const float*   volatility = (const float*)(a->volatility);
+    register const float*   otime = (const float*)(a->otime);
+    register const char*    otype = (const char*)(a->otype);
+    register       size_t num_stocks = a->num_stocks;
 
-    pthread_t threads[NUM_THREADS];
-    args_t* args_array[NUM_THREADS];
+    register       size_t nthreads = a->nthreads;
+    register       size_t cpu      = a->cpu;
 
-    size_t i;
-    for (i = 0; i < NUM_THREADS; i++) {
-        args_array[i] = (args_t*) malloc(sizeof(args_t));
-        args_array[i]->num_stocks = a->num_stocks / NUM_THREADS;
-        args_array[i]->sptPrice = a->sptPrice + i * args_array[i]->num_stocks;
-        args_array[i]->strike = a->strike + i * args_array[i]->num_stocks;
-        args_array[i]->rate = a->rate + i * args_array[i]->num_stocks;
-        args_array[i]->volatility = a->volatility + i * args_array[i]->num_stocks;
-        args_array[i]->otime = a->otime + i * args_array[i]->num_stocks;
-        args_array[i]->otype = a->otype + i * args_array[i]->num_stocks;
-        pthread_create(&threads[i], NULL, parallel, (void*) args_array[i]);
+    /* Create all threads */
+    pthread_t tid[nthreads];
+    args_t    targs[nthreads];
+
+    /* Assign current CPU to us */
+    tid[0] = pthread_self();
+
+    /* Amount of work per thread */
+    size_t size_per_thread = num_stocks / nthreads;
+
+    for (int i = 1; i < nthreads; i++) {
+        /* Initialize the argument structure */
+        targs[i].num_stocks = size_per_thread;
+        targs[i].sptPrice   = (float*)(sptPrice + (i * size_per_thread));
+        targs[i].strike     = (float*)(strike + (i * size_per_thread));
+        targs[i].rate       = (float*)(rate + (i * size_per_thread));
+        targs[i].volatility = (float*)(volatility + (i * size_per_thread));
+        targs[i].otime      = (float*)(otime + (i * size_per_thread));
+        targs[i].otype      = (char*)(otype + (i * size_per_thread));
+        targs[i].output     = (float*)(output + (i * size_per_thread));
+        targs[i].cpu      = (cpu + i) % nthreads;
+        targs[i].nthreads = nthreads;
+        pthread_create(&tid[i], NULL, parallel, (void*) &targs[i]);
     }
 
-    for (i = 0; i < NUM_THREADS; i++) {
-        pthread_join(threads[i], NULL);
+    /* Perform one portion of the work */
+    for (size_t i = 0; i < size_per_thread; i++) {
+        float sptPrice_i   = sptPrice  [i];
+        float strike_i     = strike    [i];
+        float rate_i       = rate      [i];
+        float volatility_i = volatility[i];
+        float otime_i      = otime     [i];
+        char  otype_i      = otype     [i];
+
+        float otype = (tolower(otype_i) == 'p')? 1 : 0;
+
+        output[i] = blackScholes_mimd(sptPrice_i, strike_i, rate_i, volatility_i, otime_i, otype);
     }
 
-    float* output = (float*) malloc(sizeof(float) * a->num_stocks);
-    for (i = 0; i < NUM_THREADS; i++) {
-        memcpy(output + i * args_array[i]->num_stocks, args_array[i]->output, sizeof(float) * args_array[i]->num_stocks);
-    }
-    a->output = output;
+    /* Perform trailing elements */
+    int remaining = num_stocks % nthreads;
+    for (size_t i = num_stocks - remaining; i < a->num_stocks; i++) {
+        float sptPrice_i   = sptPrice  [i];
+        float strike_i     = strike    [i];
+        float rate_i       = rate      [i];
+        float volatility_i = volatility[i];
+        float otime_i      = otime     [i];
+        char  otype_i      = otype     [i];
 
-//    for (int j = 0; j < a->num_stocks; ++j) {
-//        printf("%f\n", a->output[j]);
-//    }
+        float otype = (tolower(otype_i) == 'p')? 1 : 0;
+
+        output[i] = blackScholes_mimd(sptPrice_i, strike_i, rate_i, volatility_i, otime_i, otype);
+    }
+
+    /* Join all threads */
+    for (int i = 1; i < nthreads; i++) {
+        pthread_join(tid[i], NULL);
+    }
+
     return NULL;
 }

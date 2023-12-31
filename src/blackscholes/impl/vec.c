@@ -70,16 +70,13 @@ __m256 CNDF_simd(__m256 InputX){
     __m256 xLocal, xLocal_1;
     __m256 xLocal_2, xLocal_3;
 
-    // make negative value of InputX to zero
     __m256 mask = mm256_LT_mask(_mm256_setzero_ps(), InputX);
     __m256 mask2 = mm256_GE_mask(_mm256_setzero_ps(), InputX);
     xInput = mm256_maskz_loadu_ps(InputX, mask);
     xInputNegative = mm256_maskz_loadu_ps(InputX, mask2);
 
-    // make negative value of InputNegative to positive
     xInputNegative = _mm256_mul_ps(xInputNegative, _mm256_set1_ps(-1.0f));
 
-    // add positive and negative values
     xInput = _mm256_add_ps(xInput, xInputNegative);
 
     for (int i = 0; i < 8; ++i) {
