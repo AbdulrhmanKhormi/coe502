@@ -37,7 +37,7 @@ include template.mk
 .PHONY: clean all
 
 #  {test, dev, small, medium, large, native}
-DATA:= -d dev
+DATA:= -d medium
 
 run-scalar:
 	./build/blackscholes -i scalar $(DATA)
@@ -46,7 +46,7 @@ run-vec:
 	./build/blackscholes -i vec $(DATA)
 
 run-para:
-	./build/blackscholes -i para $(DATA) -n 8
+	./build/blackscholes -i para $(DATA) -n 24
 
 run-all: run-scalar run-para run-vec
 

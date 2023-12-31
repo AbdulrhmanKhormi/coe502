@@ -19,6 +19,7 @@
 
 /* Include application-specific headers */
 #include "../include/types.h"
+#include "../../common/vmath.h"
 
 #define inv_sqrt_2xPI 0.39894228040143270286
 
@@ -70,18 +71,19 @@ __m256 CNDF_simd(__m256 InputX){
     __m256 xLocal, xLocal_1;
     __m256 xLocal_2, xLocal_3;
 
+    // make negative value of InputX to zero
     __m256 mask = mm256_LT_mask(_mm256_setzero_ps(), InputX);
     __m256 mask2 = mm256_GE_mask(_mm256_setzero_ps(), InputX);
     xInput = mm256_maskz_loadu_ps(InputX, mask);
     xInputNegative = mm256_maskz_loadu_ps(InputX, mask2);
 
+    // make negative value of InputNegative to positive
     xInputNegative = _mm256_mul_ps(xInputNegative, _mm256_set1_ps(-1.0f));
 
+    // add positive and negative values
     xInput = _mm256_add_ps(xInput, xInputNegative);
 
-    for (int i = 0; i < 8; ++i) {
-        expValues[i] = exp(-0.5f * InputX[i] * InputX[i]);
-    }
+    expValues = _mm256_exp_ps(_mm256_mul_ps(_mm256_set1_ps(-0.5f), _mm256_mul_ps(InputX, InputX)));
 
     xNPrimeofX = expValues;
     xNPrimeofX = _mm256_mul_ps(xNPrimeofX, _mm256_set1_ps(inv_sqrt_2xPI));
@@ -146,13 +148,7 @@ __m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 vol
     xTime = otime;
     xSqrtTime = _mm256_sqrt_ps(xTime);
 
-    float logValues[8];
-
-    for(int i=0; i<8;i ++) {
-        logValues[i] = log(sptprice[i] / strike[i]);
-    }
-
-    xLogTerm = _mm256_loadu_ps(logValues);
+    xLogTerm = _mm256_log_ps(_mm256_div_ps(xStockPrice, xStrikePrice));
     xPowerTerm = _mm256_mul_ps(xVolatility, xVolatility);
     xPowerTerm = _mm256_mul_ps(xPowerTerm, _mm256_set1_ps(0.5));
 
@@ -170,10 +166,7 @@ __m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 vol
     NofXd1 = CNDF_simd(d1);
     NofXd2 = CNDF_simd(d2);
 
-    __m256 expVal;
-    for (int i = 0; i < 8; ++i) {
-        expVal[i] = exp(-(rate[i])*(otime[i]));
-    }
+    __m256 expVal = _mm256_exp_ps(_mm256_mul_ps(_mm256_set1_ps(-1.0f), _mm256_mul_ps(rate, otime)));
 
     FutureValueX = _mm256_mul_ps(xStrikePrice, expVal);
 
