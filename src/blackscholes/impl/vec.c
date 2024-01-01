@@ -205,25 +205,17 @@ void* impl_vector(void* args)
     size_t i;
     size_t num_stocks = a->num_stocks;
 
-    float* sptprice   = a->sptPrice  ;
-    float* strike     = a->strike    ;
-    float* rate       = a->rate      ;
-    float* volatility = a->volatility;
-    float* otime      = a->otime     ;
-    char * otype      = a->otype     ;
-    float* output     = a->output    ;
-
     for (i = 0; i < num_stocks; i+=8) {
-        __m256 sptprice_vec = _mm256_loadu_ps(sptprice + i);
-        __m256 strike_vec = _mm256_loadu_ps(strike + i);
-        __m256 rate_vec = _mm256_loadu_ps(rate + i);
-        __m256 volatility_vec = _mm256_loadu_ps(volatility + i);
-        __m256 otime_vec = _mm256_loadu_ps(otime + i);
-        __m256 otype_vec = char_to_float(otype + i);
+        __m256 sptprice_vec = _mm256_loadu_ps(a->sptPrice + i);
+        __m256 strike_vec = _mm256_loadu_ps(a->strike + i);
+        __m256 rate_vec = _mm256_loadu_ps(a->rate + i);
+        __m256 volatility_vec = _mm256_loadu_ps(a->volatility + i);
+        __m256 otime_vec = _mm256_loadu_ps(a->otime + i);
+        __m256 otype_vec = char_to_float(a->otype + i);
 
         __m256 result = blackScholes_simd(sptprice_vec, strike_vec, rate_vec, volatility_vec, otime_vec, otype_vec);
 
-        _mm256_storeu_ps(output + i, result);
+        _mm256_storeu_ps(a->output + i, result);
     }
 
     return NULL;
