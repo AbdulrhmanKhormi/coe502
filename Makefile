@@ -37,7 +37,8 @@ include template.mk
 .PHONY: clean all
 
 #  {test, dev, small, medium, large, native}
-DATA:= -d medium
+DATA:= -d test
+nThreads:= 8
 
 run-scalar:
 	./build/blackscholes -i scalar $(DATA)
@@ -46,7 +47,31 @@ run-vec:
 	./build/blackscholes -i vec $(DATA)
 
 run-para:
-	./build/blackscholes -i para $(DATA) -n 24
+	./build/blackscholes -i para $(DATA) -n $(nThreads)
 
 run-all: run-scalar run-para run-vec
+
+run-all-datasets:
+	./build/blackscholes -i scalar -d dev
+	./build/blackscholes -i vec -d dev
+	./build/blackscholes -i para -d dev -n $(nThreads)
+
+	./build/blackscholes -i scalar -d small
+	./build/blackscholes -i vec -d small
+	./build/blackscholes -i para -d small -n $(nThreads)
+
+	./build/blackscholes -i scalar -d medium
+	./build/blackscholes -i vec -d medium
+	./build/blackscholes -i para -d medium -n $(nThreads)
+
+	./build/blackscholes -i scalar -d large
+	./build/blackscholes -i vec -d large
+	./build/blackscholes -i para -d large -n $(nThreads)
+
+	./build/blackscholes -i scalar -d native
+	./build/blackscholes -i vec -d native
+	./build/blackscholes -i para -d native -n $(nThreads)
+
+save-results:
+	make run-all-datasets | grep 'Runtimes\|Running\|dataset' > result.txt
 

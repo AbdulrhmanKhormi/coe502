@@ -539,21 +539,21 @@ void* impl_parallel(void* args)
 ## machine one (11th Gen Intel(R) Core(TM) i7-1165G7 8 threads):
 | Implementation | Time (ns) | Speedup | dataset |
 |----------------|-----------|---------|---------|
-| scalar         | 1208      | 1.0000  | dev     |
-| vector         | 777       | 1.5547  | dev     |
-| parallel       | 73510     | 0.0164  | dev     |
-| scalar         | 186323    | 1.0000  | small   |
-| vector         | 103662    | 1.7974  | small   |
-| parallel       | 107077    | 1.7401  | small   |
-| scalar         | 747813    | 1.0000  | medium  |
-| vector         | 414325    | 1.8049  | medium  |
-| parallel       | 218491    | 3.4226  | medium  |
-| scalar         | 3023351   | 1.0000  | large   |
-| vector         | 1690273   | 1.7887  | large   |
-| parallel       | 705612    | 4.2847  | large   |
-| scalar         | 471111120 | 1.0000  | native  |
-| vector         | 266044477 | 1.7708  | native  |
-| parallel       | 120517458 | 3.9091  | native  |
+| scalar         | 3192      | 1.0000  | dev     |
+| vector         | 641       | 4.9797  | dev     |
+| parallel       | 76819     | 0.0416  | dev     |
+| scalar         | 180545    | 1.0000  | small   |
+| vector         | 32330     | 5.5844  | small   |
+| parallel       | 105888    | 1.7050  | small   |
+| scalar         | 708408    | 1.0000  | medium  |
+| vector         | 128486    | 5.5135  | medium  |
+| parallel       | 206416    | 3.4319  | medium  |
+| scalar         | 2838532   | 1.0000  | large   |
+| vector         | 518506    | 5.4744  | large   |
+| parallel       | 647415    | 4.3844  | large   |
+| scalar         | 458689072 | 1.0000  | native  |
+| vector         | 83608093  | 5.4861  | native  |
+| parallel       | 116701107 | 3.9304  | native  |
 
 ## machine two (AMD Ryzen 9 5900X 24 threads):
 | Implementation | Time (ns) | Speedup | dataset |
@@ -576,19 +576,21 @@ void* impl_parallel(void* args)
 
 formula for speedup: speedup = time of scalar implementation / time of implementation
 
-As we can see from the results, the parallel implementation is the fastest implementation in large datasets.
-The vector implementation is the fastest implementation in small datasets.
+As we can see from the results, the vector implementation shows impressive performance improvement with 5x speedup.
+It almost outperforms the parallel implementation in all datasets.
+But the parallel implementation is faster in larger datasets.
+The parallel implementation speedup in 24 threads is 14x, but the speedup in eight threads is only 4x.
 Parallel implementation didn't perform well in small datasets, but it performed well in large datasets.
 That is because the overhead of creating threads is very high,
-and it is not worth it in small datasets. Also, adding more threads will not always improve the performance.
-Because the overhead of creating threads will be higher than the performance improvement.
+and it is not worth it in small datasets.
+Also, adding more threads will not always improve the performance,
+but it will increase the overhead of creating threads thus decreasing the performance.
 The overhead of creating threads is tiny in large datasets, and it is worth it in large datasets.
 The vector implementation performed well in small datasets,
-but it didn't perform as good as parallel implementation in large datasets.
+but it didn't perform as good as parallel implementation in native dataset.
 That is because the vector implementation is limited by the size of the vector registers.
 The vector registers are 256 bits, and they can hold 8 floats.
-I think if the vector implementation also vectorized the log function and exp function, it will perform even more better.
-But I couldn't vectorize the log function and exp function because I did not have enough time.
+
 
 # 4. Conclusion:
 Both the vector and parallel implementations show a significant speedup over the scalar implementation.
@@ -607,6 +609,10 @@ We can divide the dataset into chunks, and we can process each chunk in a separa
 Each thread will use the vector implementation to process its chunk.
 This will reduce the overhead of creating threads,
 and it will improve the performance of the vector implementation. 
+I think the vector implementation is the best implementation for this problem because it shows consistent performance
+improvement unlike the parallel implementation.
+But by combining the vector and parallel implementations, The resulting implementation will have the best performance
+in native dataset and large datasets. Combining the vector and parallel got 19x speedup in native dataset in machine one,
 
 # 5. References
 https://github.com/hawajkm/characterize-microbenchmark.git

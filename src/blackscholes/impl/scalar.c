@@ -159,7 +159,7 @@ void* impl_scalar(void* args)
         float rate       = a->rate      [i];
         float volatility = a->volatility[i];
         float otime      = a->otime     [i];
-        char  otype_c     = a->otype     [i];
+        char  otype_c    = a->otype     [i];
 
         float otype = (tolower(otype_c) == 'p')? 1 : 0;
 

@@ -184,7 +184,6 @@ void* impl_parallel(void* args)
     register       size_t num_stocks = a->num_stocks;
 
     register       size_t nthreads = a->nthreads;
-    register       size_t cpu      = a->cpu;
 
     /* Create all threads */
     pthread_t tid[nthreads];
@@ -206,8 +205,6 @@ void* impl_parallel(void* args)
         targs[i].otime      = (float*)(otime + (i * size_per_thread));
         targs[i].otype      = (char*)(otype + (i * size_per_thread));
         targs[i].output     = (float*)(output + (i * size_per_thread));
-        targs[i].cpu      = (cpu + i) % nthreads;
-        targs[i].nthreads = nthreads;
         pthread_create(&tid[i], NULL, parallel, (void*) &targs[i]);
     }
 
