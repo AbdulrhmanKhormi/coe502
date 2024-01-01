@@ -197,7 +197,7 @@ In this implementation, I tried to avoid if-else statements and loops.
 I managed to avoid if-else by using the blendv instruction, which is a vectorized version of the ternary operator,
 the cmp instruction, which is a vectorized version of the comparison operator,
 and mask registers which are vectorized versions of the boolean variables.
-Unfortunately, I couldn't avoid the loop for log and exp functions.
+I used log and exp functions from the vmath library provided in the project repository.
 The reset of the code is similar to the scalar implementation just with vectorized instructions.
 In CNDF function, I created a mask that contains ones in the positions where the input is negative,
 and I created another mask that contains ones in the positions where the input is positive.
@@ -205,7 +205,7 @@ I used the mask to split the input into two vectors, one vector contains the pos
 and the other vector contains the negative inputs.
 I changed the sign of the negative inputs, and I added the two vectors together.
 I used the mask again in output to select the negative inputs and subtract one from them.
-The same idea is used in the black scholes function.
+The same idea is used with the output (option price) in the black scholes function.
 ```c
 #define inv_sqrt_2xPI 0.39894228040143270286
 
@@ -532,7 +532,10 @@ void* impl_parallel(void* args)
     return NULL;
 }
 ```
-
+# 3. AVX2 & pThreads Implementations:
+The AVX2 & pThreads implementation is a combination of the vector and parallel implementations.
+It splits the dataset into chunks, and it processes each chunk in a separate thread.
+Each thread will use the vector implementation to process its chunk.
 # 4. Results:
 ### The following table shows the results of the different implementations on different datasets on two different machines.
 
@@ -558,21 +561,21 @@ void* impl_parallel(void* args)
 ## machine two (AMD Ryzen 9 5900X 24 threads):
 | Implementation | Time (ns) | Speedup | dataset |
 |----------------|-----------|---------|---------|
-| scalar         | 966       | 1.0000  | dev     |
-| vector         | 434       | 2.2258  | dev     |
-| parallel       | 506478    | 0.0019  | dev     |
-| scalar         | 121257    | 1.0000  | small   |
-| vector         | 71089     | 1.7057  | small   |
-| parallel       | 539252    | 0.2248  | small   |
-| scalar         | 480121    | 1.0000  | medium  |
-| vector         | 282896    | 1.6971  | medium  |
-| parallel       | 526600    | 0.9117  | medium  |
-| scalar         | 1950527   | 1.0000  | large   |
-| vector         | 1142842   | 1.7067  | large   |
-| parallel       | 597773    | 3.2629  | large   |
-| scalar         | 302045428 | 1.0000  | native  |
-| vector         | 176733424 | 1.7090  | native  |
-| parallel       | 21378723  | 14.1283 | native  |
+| scalar         | 891       | 1.0000  | dev     |
+| vector         | 149       | 5.9798  | dev     |
+| parallel       | 515554    | 0.0017  | dev     |
+| scalar         | 121671    | 1.0000  | small   |
+| vector         | 23412     | 5.1969  | small   |
+| parallel       | 500812    | 0.2429  | small   |
+| scalar         | 483029    | 1.0000  | medium  |
+| vector         | 94060     | 5.1353  | medium  |
+| parallel       | 522427    | 0.9245  | medium  |
+| scalar         | 1933590   | 1.0000  | large   |
+| vector         | 376048    | 5.1418  | large   |
+| parallel       | 591913    | 3.2666  | large   |
+| scalar         | 304103865 | 1.0000  | native  |
+| vector         | 58929702  | 5.1604  | native  |
+| parallel       | 21180817  | 14.3575 | native  |
 
 formula for speedup: speedup = time of scalar implementation / time of implementation
 
@@ -592,7 +595,7 @@ That is because the vector implementation is limited by the size of the vector r
 The vector registers are 256 bits, and they can hold 8 floats.
 
 
-# 4. Conclusion:
+# 5. Conclusion:
 Both the vector and parallel implementations show a significant speedup over the scalar implementation.
 The parallel implementation is easier to implement than the vector implementation.
 The parallel didn't perform well in small datasets, but it performed well in large datasets.
@@ -613,12 +616,14 @@ I think the vector implementation is the best implementation for this problem be
 improvement unlike the parallel implementation.
 But by combining the vector and parallel implementations, The resulting implementation will have the best performance
 in native dataset and large datasets. Combining the vector and parallel got 19x speedup in native dataset in machine one,
+and it got 44x speedup in native dataset in machine two. The time difference between the baseline implementation and the
+combined implementation is extremely noticeable.
 
-# 5. References
-https://github.com/hawajkm/characterize-microbenchmark.git
+# 6. References
+https://github.com/hawajkm/characterize-microbenchmark.git \
+https://github.com/AbdulrhmanKhormi/coe502.git
 
-
-# 6. Machine and OS Specifications
+# 7. Machine and OS Specifications
 
 # machine one
 ## cpu info:

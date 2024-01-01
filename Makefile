@@ -37,14 +37,14 @@ include template.mk
 .PHONY: clean all
 
 #  {test, dev, small, medium, large, native}
-DATA:= -d test
-nThreads:= 8
+DATA:= -d native
+nThreads:= 24
 
 run-scalar:
 	./build/blackscholes -i scalar $(DATA)
 
 run-vec:
-	./build/blackscholes -i vec $(DATA)
+	./build/blackscholes -i vec $(DATA) -n $(nThreads)
 
 run-para:
 	./build/blackscholes -i para $(DATA) -n $(nThreads)
