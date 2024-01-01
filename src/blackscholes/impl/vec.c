@@ -70,7 +70,7 @@ __m256 CNDF_simd(__m256 InputX){
     __m256 xLocal, xLocal_1;
     __m256 xLocal_2, xLocal_3;
 
-    // make negative value of InputX to zero
+    // spilt the input vector into positive and negative vectors
     __m256 mask = mm256_LT_mask(_mm256_setzero_ps(), InputX);
     __m256 mask2 = mm256_GE_mask(_mm256_setzero_ps(), InputX);
     xInput = mm256_maskz_loadu_ps(InputX, mask);
