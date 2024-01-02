@@ -41,7 +41,7 @@ this implementation is similar to the implementation provided in the project ins
 ```c
 #define inv_sqrt_2xPI 0.39894228040143270286
 
-float CNDF(float InputX){
+float CNDF(float InputX) {
     int sign;
 
     float OutputX;
@@ -86,10 +86,10 @@ float CNDF(float InputX){
     xLocal_2 = xLocal_2 + xLocal_3;
 
     xLocal_1 = xLocal_2 + xLocal_1;
-    xLocal   = xLocal_1 * xNPrimeofX;
-    xLocal   = 1.0 - xLocal;
+    xLocal = xLocal_1 * xNPrimeofX;
+    xLocal = 1.0 - xLocal;
 
-    OutputX  = xLocal;
+    OutputX = xLocal;
 
     if (sign) {
         OutputX = 1.0 - OutputX;
@@ -97,7 +97,7 @@ float CNDF(float InputX){
     return OutputX;
 }
 
-float blackScholes(float sptprice, float strike, float rate, float volatility, float otime, int otype){
+float blackScholes(float sptprice, float strike, float rate, float volatility, float otime, int otype) {
     float OptionPrice;
 
     // local private working variables for the calculation
@@ -165,20 +165,19 @@ float blackScholes(float sptprice, float strike, float rate, float volatility, f
 }
 
 /* Naive Implementation */
-void* impl_scalar(void* args)
-{
-    args_t* a = (args_t*) args;
+void *impl_scalar(void *args) {
+    args_t *a = (args_t *) args;
 
     size_t i;
     for (i = 0; i < a->num_stocks; i++) {
-        float sptPrice   = a->sptPrice  [i];
-        float strike     = a->strike    [i];
-        float rate       = a->rate      [i];
+        float sptPrice = a->sptPrice[i];
+        float strike = a->strike[i];
+        float rate = a->rate[i];
         float volatility = a->volatility[i];
-        float otime      = a->otime     [i];
-        char  otype_c     = a->otype     [i];
+        float otime = a->otime[i];
+        char otype_c = a->otype[i];
 
-        float otype = (tolower(otype_c) == 'p')? 1 : 0;
+        float otype = (tolower(otype_c) == 'p') ? 1 : 0;
 
         float value = blackScholes(sptPrice, strike, rate, volatility, otime, otype);
 
@@ -209,42 +208,41 @@ The same idea is used with the output (option price) in the black scholes functi
 ```c
 #define inv_sqrt_2xPI 0.39894228040143270286
 
-__m256 mm256_mask_sub_ps(__m256 a, __m256 b, __m256 mask){
+__m256 mm256_mask_sub_ps(__m256 a, __m256 b, __m256 mask) {
     __m256 result = _mm256_sub_ps(a, b);
     return _mm256_blendv_ps(b, result, mask);
 }
 
-__m256 mm256_maskz_sub_ps(__m256 a, __m256 b, __m256 mask){
+__m256 mm256_maskz_sub_ps(__m256 a, __m256 b, __m256 mask) {
     __m256 result = _mm256_sub_ps(a, b);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, mask);
 }
 
-__m256 mm256_maskz_loadu_ps(__m256 b, __m256 mask){
+__m256 mm256_maskz_loadu_ps(__m256 b, __m256 mask) {
     return _mm256_and_ps(b, mask);
 }
 
-__m256 mm256_LT_mask(__m256 a, __m256 b){
+__m256 mm256_LT_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_LT_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 mm256_GE_mask(__m256 a, __m256 b){
+__m256 mm256_GE_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_GE_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 mm256_EQ_mask(__m256 a, __m256 b){
+__m256 mm256_EQ_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_EQ_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 mm256_NEQ_mask(__m256 a, __m256 b){
+__m256 mm256_NEQ_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_NEQ_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 CNDF_simd(__m256 InputX){
-    __mmask8 sign;
+__m256 CNDF_simd(__m256 InputX) {
 
     __m256 OutputX;
     __m256 xInput;
@@ -256,19 +254,20 @@ __m256 CNDF_simd(__m256 InputX){
     __m256 xK2_4, xK2_5;
     __m256 xLocal, xLocal_1;
     __m256 xLocal_2, xLocal_3;
-    
+
+    // spilt the input vector into positive and negative vectors
     __m256 mask = mm256_LT_mask(_mm256_setzero_ps(), InputX);
     __m256 mask2 = mm256_GE_mask(_mm256_setzero_ps(), InputX);
     xInput = mm256_maskz_loadu_ps(InputX, mask);
     xInputNegative = mm256_maskz_loadu_ps(InputX, mask2);
-    
+
+    // make negative value of InputNegative to positive
     xInputNegative = _mm256_mul_ps(xInputNegative, _mm256_set1_ps(-1.0f));
 
+    // add positive and negative values
     xInput = _mm256_add_ps(xInput, xInputNegative);
 
-    for (int i = 0; i < 8; ++i) {
-        expValues[i] = exp(-0.5f * InputX[i] * InputX[i]);
-    }
+    expValues = _mm256_exp_ps(_mm256_mul_ps(_mm256_set1_ps(-0.5f), _mm256_mul_ps(InputX, InputX)));
 
     xNPrimeofX = expValues;
     xNPrimeofX = _mm256_mul_ps(xNPrimeofX, _mm256_set1_ps(inv_sqrt_2xPI));
@@ -291,16 +290,16 @@ __m256 CNDF_simd(__m256 InputX){
     xLocal_2 = _mm256_add_ps(xLocal_2, xLocal_3);
 
     xLocal_1 = _mm256_add_ps(xLocal_2, xLocal_1);
-    xLocal   = _mm256_mul_ps(xLocal_1, xNPrimeofX);
-    xLocal   = _mm256_sub_ps(_mm256_set1_ps(1.0f), xLocal);
+    xLocal = _mm256_mul_ps(xLocal_1, xNPrimeofX);
+    xLocal = _mm256_sub_ps(_mm256_set1_ps(1.0f), xLocal);
 
-    OutputX  = xLocal;
-    OutputX = mm256_mask_sub_ps( _mm256_set1_ps(1.0f),OutputX ,mask2 );
+    OutputX = xLocal;
+    OutputX = mm256_mask_sub_ps(_mm256_set1_ps(1.0f), OutputX, mask2);
 
     return OutputX;
 }
 
-__m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 volatility, __m256 otime,__m256 otype){
+__m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 volatility, __m256 otime, __m256 otype) {
     __m256 OptionPrice;
     __m256 OptionPrice2;
 
@@ -333,13 +332,7 @@ __m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 vol
     xTime = otime;
     xSqrtTime = _mm256_sqrt_ps(xTime);
 
-    float logValues[8];
-
-    for(int i=0; i<8;i ++) {
-        logValues[i] = log(sptprice[i] / strike[i]);
-    }
-
-    xLogTerm = _mm256_loadu_ps(logValues);
+    xLogTerm = _mm256_log_ps(_mm256_div_ps(xStockPrice, xStrikePrice));
     xPowerTerm = _mm256_mul_ps(xVolatility, xVolatility);
     xPowerTerm = _mm256_mul_ps(xPowerTerm, _mm256_set1_ps(0.5));
 
@@ -357,10 +350,7 @@ __m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 vol
     NofXd1 = CNDF_simd(d1);
     NofXd2 = CNDF_simd(d2);
 
-    __m256 expVal;
-    for (int i = 0; i < 8; ++i) {
-        expVal[i] = exp(-(rate[i])*(otime[i]));
-    }
+    __m256 expVal = _mm256_exp_ps(_mm256_mul_ps(_mm256_set1_ps(-1.0f), _mm256_mul_ps(rate, otime)));
 
     FutureValueX = _mm256_mul_ps(xStrikePrice, expVal);
 
@@ -383,42 +373,33 @@ __m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 vol
     return OptionPrice;
 }
 
-__m256 char_to_float(char* c) {
+__m256 char_to_float(char *c) {
     __m256 result;
     for (int i = 0; i < 8; ++i) {
-        result[i] = (tolower(c[i]) == 'p')? 1 : 0;
+        result[i] = (tolower(c[i]) == 'p') ? 1 : 0;
     }
     return result;
 }
 
 /* Alternative Implementation */
-void* impl_vector(void* args)
-{
+void *impl_vector(void *args) {
 
-    args_t* a = (args_t*) args;
+    args_t *a = (args_t *) args;
 
     size_t i;
     size_t num_stocks = a->num_stocks;
 
-    float* sptprice   = a->sptPrice  ;
-    float* strike     = a->strike    ;
-    float* rate       = a->rate      ;
-    float* volatility = a->volatility;
-    float* otime      = a->otime     ;
-    char * otype      = a->otype     ;
-    float* output     = a->output    ;
-
-    for (i = 0; i < num_stocks; i+=8) {
-        __m256 sptprice_vec = _mm256_loadu_ps(sptprice + i);
-        __m256 strike_vec = _mm256_loadu_ps(strike + i);
-        __m256 rate_vec = _mm256_loadu_ps(rate + i);
-        __m256 volatility_vec = _mm256_loadu_ps(volatility + i);
-        __m256 otime_vec = _mm256_loadu_ps(otime + i);
-        __m256 otype_vec = char_to_float(otype + i);
+    for (i = 0; i < num_stocks; i += 8) {
+        __m256 sptprice_vec = _mm256_loadu_ps(a->sptPrice + i);
+        __m256 strike_vec = _mm256_loadu_ps(a->strike + i);
+        __m256 rate_vec = _mm256_loadu_ps(a->rate + i);
+        __m256 volatility_vec = _mm256_loadu_ps(a->volatility + i);
+        __m256 otime_vec = _mm256_loadu_ps(a->otime + i);
+        __m256 otype_vec = char_to_float(a->otype + i);
 
         __m256 result = blackScholes_simd(sptprice_vec, strike_vec, rate_vec, volatility_vec, otime_vec, otype_vec);
 
-        _mm256_storeu_ps(output + i, result);
+        _mm256_storeu_ps(a->output + i, result);
     }
 
     return NULL;
@@ -434,18 +415,17 @@ Also, it computes the trailing elements in the main thread. The elements that ar
 It extends the scalar implementation to use multiple threads:
 
 ```c
-
-void * parallel(void* args){
-    args_t* a = (args_t*) args;
+void *parallel(void *args) {
+    args_t *a = (args_t *) args;
     for (size_t i = 0; i < a->num_stocks; i++) {
-        float sptPrice   = a->sptPrice  [i];
-        float strike     = a->strike    [i];
-        float rate       = a->rate      [i];
+        float sptPrice = a->sptPrice[i];
+        float strike = a->strike[i];
+        float rate = a->rate[i];
         float volatility = a->volatility[i];
-        float otime      = a->otime     [i];
-        char  otype_c     = a->otype     [i];
+        float otime = a->otime[i];
+        char otype_c = a->otype[i];
 
-        float otype = (tolower(otype_c) == 'p')? 1 : 0;
+        float otype = (tolower(otype_c) == 'p') ? 1 : 0;
 
         a->output[i] = blackScholes_mimd(sptPrice, strike, rate, volatility, otime, otype);
     }
@@ -453,26 +433,23 @@ void * parallel(void* args){
 }
 
 /* Alternative Implementation */
-void* impl_parallel(void* args)
-{
+void *impl_parallel(void *args) {
 
-    args_t* a = (args_t*) args;
+    args_t *a = (args_t *) args;
     /* Get all the arguments */
-    register       float*   output = (float*)(a->output);
-    register const float*   sptPrice = (const float*)(a->sptPrice);
-    register const float*   strike = (const float*)(a->strike);
-    register const float*   rate = (const float*)(a->rate);
-    register const float*   volatility = (const float*)(a->volatility);
-    register const float*   otime = (const float*)(a->otime);
-    register const char*    otype = (const char*)(a->otype);
-    register       size_t num_stocks = a->num_stocks;
-
-    register       size_t nthreads = a->nthreads;
-    register       size_t cpu      = a->cpu;
+    register float *output = a->output;
+    register float *sptPrice = a->sptPrice;
+    register float *strike = a->strike;
+    register float *rate = a->rate;
+    register float *volatility = a->volatility;
+    register float *otime = a->otime;
+    register char *otype = a->otype;
+    register size_t num_stocks = a->num_stocks;
+    register size_t nthreads = a->nthreads;
 
     /* Create all threads */
     pthread_t tid[nthreads];
-    args_t    targs[nthreads];
+    args_t targs[nthreads];
 
     /* Assign current CPU to us */
     tid[0] = pthread_self();
@@ -483,28 +460,26 @@ void* impl_parallel(void* args)
     for (int i = 1; i < nthreads; i++) {
         /* Initialize the argument structure */
         targs[i].num_stocks = size_per_thread;
-        targs[i].sptPrice   = (float*)(sptPrice + (i * size_per_thread));
-        targs[i].strike     = (float*)(strike + (i * size_per_thread));
-        targs[i].rate       = (float*)(rate + (i * size_per_thread));
-        targs[i].volatility = (float*)(volatility + (i * size_per_thread));
-        targs[i].otime      = (float*)(otime + (i * size_per_thread));
-        targs[i].otype      = (char*)(otype + (i * size_per_thread));
-        targs[i].output     = (float*)(output + (i * size_per_thread));
-        targs[i].cpu      = (cpu + i) % nthreads;
-        targs[i].nthreads = nthreads;
-        pthread_create(&tid[i], NULL, parallel, (void*) &targs[i]);
+        targs[i].sptPrice = (sptPrice + (i * size_per_thread));
+        targs[i].strike = (strike + (i * size_per_thread));
+        targs[i].rate = (rate + (i * size_per_thread));
+        targs[i].volatility = (volatility + (i * size_per_thread));
+        targs[i].otime = (otime + (i * size_per_thread));
+        targs[i].otype = (otype + (i * size_per_thread));
+        targs[i].output = (output + (i * size_per_thread));
+        pthread_create(&tid[i], NULL, parallel, &targs[i]);
     }
 
     /* Perform one portion of the work */
     for (size_t i = 0; i < size_per_thread; i++) {
-        float sptPrice_i   = sptPrice  [i];
-        float strike_i     = strike    [i];
-        float rate_i       = rate      [i];
+        float sptPrice_i = sptPrice[i];
+        float strike_i = strike[i];
+        float rate_i = rate[i];
         float volatility_i = volatility[i];
-        float otime_i      = otime     [i];
-        char  otype_i      = otype     [i];
+        float otime_i = otime[i];
+        char otype_i = otype[i];
 
-        float otype = (tolower(otype_i) == 'p')? 1 : 0;
+        float otype = (tolower(otype_i) == 'p') ? 1 : 0;
 
         output[i] = blackScholes_mimd(sptPrice_i, strike_i, rate_i, volatility_i, otime_i, otype);
     }
@@ -512,14 +487,14 @@ void* impl_parallel(void* args)
     /* Perform trailing elements */
     int remaining = num_stocks % nthreads;
     for (size_t i = num_stocks - remaining; i < a->num_stocks; i++) {
-        float sptPrice_i   = sptPrice  [i];
-        float strike_i     = strike    [i];
-        float rate_i       = rate      [i];
+        float sptPrice_i = sptPrice[i];
+        float strike_i = strike[i];
+        float rate_i = rate[i];
         float volatility_i = volatility[i];
-        float otime_i      = otime     [i];
-        char  otype_i      = otype     [i];
+        float otime_i = otime[i];
+        char otype_i = otype[i];
 
-        float otype = (tolower(otype_i) == 'p')? 1 : 0;
+        float otype = (tolower(otype_i) == 'p') ? 1 : 0;
 
         output[i] = blackScholes_mimd(sptPrice_i, strike_i, rate_i, volatility_i, otime_i, otype);
     }
@@ -536,6 +511,78 @@ void* impl_parallel(void* args)
 The AVX2 & pThreads implementation is a combination of the vector and parallel implementations.
 It splits the dataset into chunks, and it processes each chunk in a separate thread.
 Each thread will use the vector implementation to process its chunk.
+
+```c
+#include "vec.h"
+
+void *impl_vector_para(void *args) {
+    args_t *a = (args_t *) args;
+
+    register float *output = a->output;
+    register float *sptPrice = a->sptPrice;
+    register float *strike = a->strike;
+    register float *rate = a->rate;
+    register float *volatility = a->volatility;
+    register float *otime = a->otime;
+    register char *otype = a->otype;
+    register size_t num_stocks = a->num_stocks;
+    register size_t nthreads = a->nthreads;
+
+    pthread_t tid[nthreads];
+    args_t targs[nthreads];
+
+    tid[0] = pthread_self();
+
+    size_t size_per_thread = num_stocks / nthreads;
+
+    for (int i = 1; i < nthreads; i++) {
+        targs[i].num_stocks = size_per_thread;
+        targs[i].sptPrice = (sptPrice + (i * size_per_thread));
+        targs[i].strike = (strike + (i * size_per_thread));
+        targs[i].rate = (rate + (i * size_per_thread));
+        targs[i].volatility = (volatility + (i * size_per_thread));
+        targs[i].otime = (otime + (i * size_per_thread));
+        targs[i].otype = (otype + (i * size_per_thread));
+        targs[i].output = (output + (i * size_per_thread));
+        pthread_create(&tid[i], NULL, impl_vector, &targs[i]);
+    }
+
+    for (size_t i = 0; i < size_per_thread; i += 8) {
+        __m256 sptprice_vec = _mm256_loadu_ps(a->sptPrice + i);
+        __m256 strike_vec = _mm256_loadu_ps(a->strike + i);
+        __m256 rate_vec = _mm256_loadu_ps(a->rate + i);
+        __m256 volatility_vec = _mm256_loadu_ps(a->volatility + i);
+        __m256 otime_vec = _mm256_loadu_ps(a->otime + i);
+        __m256 otype_vec = char_to_float(a->otype + i);
+
+        __m256 result = blackScholes_simd(sptprice_vec, strike_vec, rate_vec, volatility_vec, otime_vec, otype_vec);
+
+        _mm256_storeu_ps(a->output + i, result);
+    }
+
+    int remaining = num_stocks % nthreads;
+    for (size_t i = num_stocks - remaining; i < a->num_stocks; i += 8) {
+        __m256 sptprice_vec = _mm256_loadu_ps(a->sptPrice + i);
+        __m256 strike_vec = _mm256_loadu_ps(a->strike + i);
+        __m256 rate_vec = _mm256_loadu_ps(a->rate + i);
+        __m256 volatility_vec = _mm256_loadu_ps(a->volatility + i);
+        __m256 otime_vec = _mm256_loadu_ps(a->otime + i);
+        __m256 otype_vec = char_to_float(a->otype + i);
+
+        __m256 result = blackScholes_simd(sptprice_vec, strike_vec, rate_vec, volatility_vec, otime_vec, otype_vec);
+
+        _mm256_storeu_ps(a->output + i, result);
+    }
+
+    for (int i = 1; i < nthreads; i++) {
+        pthread_join(tid[i], NULL);
+    }
+
+    return NULL;
+
+}
+```
+
 # 4. Results:
 ### The following table shows the results of the different implementations on different datasets on two different machines.
 

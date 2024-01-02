@@ -5,6 +5,6 @@
 #ifndef COE502_231_VEC_PARA_H
 #define COE502_231_VEC_PARA_H
 
-void* impl_vector_para(void* args);
+void *impl_vector_para(void *args);
 
 #endif //COE502_231_VEC_PARA_H

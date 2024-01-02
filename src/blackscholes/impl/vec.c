@@ -24,41 +24,41 @@
 
 #define inv_sqrt_2xPI 0.39894228040143270286
 
-__m256 mm256_mask_sub_ps(__m256 a, __m256 b, __m256 mask){
+__m256 mm256_mask_sub_ps(__m256 a, __m256 b, __m256 mask) {
     __m256 result = _mm256_sub_ps(a, b);
     return _mm256_blendv_ps(b, result, mask);
 }
 
-__m256 mm256_maskz_sub_ps(__m256 a, __m256 b, __m256 mask){
+__m256 mm256_maskz_sub_ps(__m256 a, __m256 b, __m256 mask) {
     __m256 result = _mm256_sub_ps(a, b);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, mask);
 }
 
-__m256 mm256_maskz_loadu_ps(__m256 b, __m256 mask){
+__m256 mm256_maskz_loadu_ps(__m256 b, __m256 mask) {
     return _mm256_and_ps(b, mask);
 }
 
-__m256 mm256_LT_mask(__m256 a, __m256 b){
+__m256 mm256_LT_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_LT_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 mm256_GE_mask(__m256 a, __m256 b){
+__m256 mm256_GE_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_GE_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 mm256_EQ_mask(__m256 a, __m256 b){
+__m256 mm256_EQ_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_EQ_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 mm256_NEQ_mask(__m256 a, __m256 b){
+__m256 mm256_NEQ_mask(__m256 a, __m256 b) {
     __m256 result = _mm256_cmp_ps(a, b, _CMP_NEQ_OQ);
     return _mm256_blendv_ps(_mm256_setzero_ps(), result, result);
 }
 
-__m256 CNDF_simd(__m256 InputX){
+__m256 CNDF_simd(__m256 InputX) {
 
     __m256 OutputX;
     __m256 xInput;
@@ -106,16 +106,16 @@ __m256 CNDF_simd(__m256 InputX){
     xLocal_2 = _mm256_add_ps(xLocal_2, xLocal_3);
 
     xLocal_1 = _mm256_add_ps(xLocal_2, xLocal_1);
-    xLocal   = _mm256_mul_ps(xLocal_1, xNPrimeofX);
-    xLocal   = _mm256_sub_ps(_mm256_set1_ps(1.0f), xLocal);
+    xLocal = _mm256_mul_ps(xLocal_1, xNPrimeofX);
+    xLocal = _mm256_sub_ps(_mm256_set1_ps(1.0f), xLocal);
 
-    OutputX  = xLocal;
-    OutputX = mm256_mask_sub_ps( _mm256_set1_ps(1.0f),OutputX ,mask2 );
+    OutputX = xLocal;
+    OutputX = mm256_mask_sub_ps(_mm256_set1_ps(1.0f), OutputX, mask2);
 
     return OutputX;
 }
 
-__m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 volatility, __m256 otime,__m256 otype){
+__m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 volatility, __m256 otime, __m256 otype) {
     __m256 OptionPrice;
     __m256 OptionPrice2;
 
@@ -189,24 +189,23 @@ __m256 blackScholes_simd(__m256 sptprice, __m256 strike, __m256 rate, __m256 vol
     return OptionPrice;
 }
 
-__m256 char_to_float(char* c) {
+__m256 char_to_float(char *c) {
     __m256 result;
     for (int i = 0; i < 8; ++i) {
-        result[i] = (tolower(c[i]) == 'p')? 1 : 0;
+        result[i] = (tolower(c[i]) == 'p') ? 1 : 0;
     }
     return result;
 }
 
 /* Alternative Implementation */
-void* impl_vector(void* args)
-{
+void *impl_vector(void *args) {
 
-    args_t* a = (args_t*) args;
+    args_t *a = (args_t *) args;
 
     size_t i;
     size_t num_stocks = a->num_stocks;
 
-    for (i = 0; i < num_stocks; i+=8) {
+    for (i = 0; i < num_stocks; i += 8) {
         __m256 sptprice_vec = _mm256_loadu_ps(a->sptPrice + i);
         __m256 strike_vec = _mm256_loadu_ps(a->strike + i);
         __m256 rate_vec = _mm256_loadu_ps(a->rate + i);

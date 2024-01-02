@@ -52,7 +52,7 @@ run-para:
 run-vec-para:
 	./build/blackscholes -i vec-para $(DATA) -n $(nThreads)
 
-run-all: run-scalar run-para run-vec
+run-all: run-scalar run-para run-vec run-vec-para
 
 run-all-datasets:
 	./build/blackscholes -i scalar -d dev

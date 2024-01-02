@@ -24,7 +24,7 @@
 
 #define inv_sqrt_2xPI 0.39894228040143270286
 
-float CNDF(float InputX){
+float CNDF(float InputX) {
     int sign;
 
     float OutputX;
@@ -69,10 +69,10 @@ float CNDF(float InputX){
     xLocal_2 = xLocal_2 + xLocal_3;
 
     xLocal_1 = xLocal_2 + xLocal_1;
-    xLocal   = xLocal_1 * xNPrimeofX;
-    xLocal   = 1.0 - xLocal;
+    xLocal = xLocal_1 * xNPrimeofX;
+    xLocal = 1.0 - xLocal;
 
-    OutputX  = xLocal;
+    OutputX = xLocal;
 
     if (sign) {
         OutputX = 1.0 - OutputX;
@@ -80,7 +80,7 @@ float CNDF(float InputX){
     return OutputX;
 }
 
-float blackScholes(float sptprice, float strike, float rate, float volatility, float otime, int otype){
+float blackScholes(float sptprice, float strike, float rate, float volatility, float otime, int otype) {
     float OptionPrice;
 
     // local private working variables for the calculation
@@ -148,20 +148,19 @@ float blackScholes(float sptprice, float strike, float rate, float volatility, f
 }
 
 /* Naive Implementation */
-void* impl_scalar(void* args)
-{
-    args_t* a = (args_t*) args;
+void *impl_scalar(void *args) {
+    args_t *a = (args_t *) args;
 
     size_t i;
     for (i = 0; i < a->num_stocks; i++) {
-        float sptPrice   = a->sptPrice  [i];
-        float strike     = a->strike    [i];
-        float rate       = a->rate      [i];
+        float sptPrice = a->sptPrice[i];
+        float strike = a->strike[i];
+        float rate = a->rate[i];
         float volatility = a->volatility[i];
-        float otime      = a->otime     [i];
-        char  otype_c    = a->otype     [i];
+        float otime = a->otime[i];
+        char otype_c = a->otype[i];
 
-        float otype = (tolower(otype_c) == 'p')? 1 : 0;
+        float otype = (tolower(otype_c) == 'p') ? 1 : 0;
 
         float value = blackScholes(sptPrice, strike, rate, volatility, otime, otype);
 

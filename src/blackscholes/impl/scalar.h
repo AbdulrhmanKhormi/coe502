@@ -10,6 +10,6 @@
 #define __IMPL_SCALAR_H_
 
 /* Function declaration */
-void* impl_scalar(void* args);
+void *impl_scalar(void *args);
 
 #endif //__IMPL_SCALAR_H_
