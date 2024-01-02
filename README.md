@@ -507,7 +507,7 @@ void *impl_parallel(void *args) {
     return NULL;
 }
 ```
-# 3. AVX2 & pThreads Implementations:
+# 5. AVX2 & pThreads Implementations:
 The AVX2 & pThreads implementation is a combination of the vector and parallel implementations.
 It splits the dataset into chunks, and it processes each chunk in a separate thread.
 Each thread will use the vector implementation to process its chunk.
@@ -583,7 +583,7 @@ void *impl_vector_para(void *args) {
 }
 ```
 
-# 4. Results:
+# 6. Results:
 ### The following table shows the results of the different implementations on different datasets on two different machines.
 
 ## machine one (11th Gen Intel(R) Core(TM) i7-1165G7 8 threads):
@@ -642,7 +642,7 @@ That is because the vector implementation is limited by the size of the vector r
 The vector registers are 256 bits, and they can hold 8 floats.
 
 
-# 5. Conclusion:
+# 7. Conclusion:
 Both the vector and parallel implementations show a significant speedup over the scalar implementation.
 The parallel implementation is easier to implement than the vector implementation.
 The parallel didn't perform well in small datasets, but it performed well in large datasets.
@@ -666,11 +666,11 @@ in native dataset and large datasets. Combining the vector and parallel got 19x 
 and it got 44x speedup in native dataset in machine two. The time difference between the baseline implementation and the
 combined implementation is extremely noticeable.
 
-# 6. References
+# 8. References
 https://github.com/hawajkm/characterize-microbenchmark.git \
 https://github.com/AbdulrhmanKhormi/coe502.git
 
-# 7. Machine and OS Specifications
+# 9. Machine and OS Specifications
 
 # machine one
 ## cpu info:
