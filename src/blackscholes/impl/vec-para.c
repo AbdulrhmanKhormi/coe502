@@ -48,7 +48,9 @@ void *impl_vector_para(void *args) {
         __m256 rate_vec = _mm256_loadu_ps(a->rate + i);
         __m256 volatility_vec = _mm256_loadu_ps(a->volatility + i);
         __m256 otime_vec = _mm256_loadu_ps(a->otime + i);
-        __m256 otype_vec = char_to_float(a->otype + i);
+        __m256i otype = _mm256_cvtepu8_epi32(_mm_loadu_si128((const __m128i *) (a->otype + i)));
+        otype = _mm256_cmpeq_epi32(otype, _mm256_set1_epi32('P'));
+        __m256 otype_vec = _mm256_castsi256_ps(otype);
 
         __m256 result = blackScholes_simd(sptprice_vec, strike_vec, rate_vec, volatility_vec, otime_vec, otype_vec);
 
@@ -56,17 +58,30 @@ void *impl_vector_para(void *args) {
     }
 
     int remaining = num_stocks % nthreads;
-    for (size_t i = num_stocks - remaining; i < a->num_stocks; i += 8) {
-        __m256 sptprice_vec = _mm256_loadu_ps(a->sptPrice + i);
-        __m256 strike_vec = _mm256_loadu_ps(a->strike + i);
-        __m256 rate_vec = _mm256_loadu_ps(a->rate + i);
-        __m256 volatility_vec = _mm256_loadu_ps(a->volatility + i);
-        __m256 otime_vec = _mm256_loadu_ps(a->otime + i);
-        __m256 otype_vec = char_to_float(a->otype + i);
+    __m256i omask = _mm256_set1_epi32(0x80000000);
+    const int vlen = 32 / sizeof(float);
+
+    for (size_t hw_vlen, i = num_stocks - remaining; i < num_stocks; i += hw_vlen) {
+        int rem = num_stocks - i;
+        hw_vlen = rem < vlen ? rem : vlen;
+        if (hw_vlen < vlen) {
+            unsigned int m[vlen];
+            for (size_t j = 0; j < vlen; j++)
+                m[j] = (j < hw_vlen) ? 0x80000000 : 0x00000000;
+            omask = _mm256_setr_epi32(m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7]);
+        }
+        __m256 sptprice_vec = _mm256_maskload_ps(a->sptPrice + i, omask);
+        __m256 strike_vec = _mm256_maskload_ps(a->strike + i, omask);
+        __m256 rate_vec = _mm256_maskload_ps(a->rate + i, omask);
+        __m256 volatility_vec = _mm256_maskload_ps(a->volatility + i, omask);
+        __m256 otime_vec = _mm256_maskload_ps(a->otime + i, omask);
+        __m256i otype = _mm256_cvtepu8_epi32(_mm_loadu_si128((const __m128i *) (a->otype + i)));
+        otype = _mm256_cmpeq_epi32(otype, _mm256_set1_epi32('P'));
+        __m256 otype_vec = _mm256_castsi256_ps(otype);
 
         __m256 result = blackScholes_simd(sptprice_vec, strike_vec, rate_vec, volatility_vec, otime_vec, otype_vec);
 
-        _mm256_storeu_ps(a->output + i, result);
+        _mm256_maskstore_ps(a->output + i, omask, result);
     }
 
     for (int i = 1; i < nthreads; i++) {
