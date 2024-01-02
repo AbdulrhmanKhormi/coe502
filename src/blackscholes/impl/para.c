@@ -170,15 +170,15 @@ void* impl_parallel(void* args)
 
     args_t* a = (args_t*) args;
     /* Get all the arguments */
-    register float*   output = a->output;
-    register float*   sptPrice = a->sptPrice;
-    register float*   strike = a->strike;
-    register float*   rate = a->rate;
-    register float*   volatility = a->volatility;
-    register float*   otime = a->otime;
-    register char*    otype = a->otype;
-    register size_t   num_stocks = a->num_stocks;
-    register size_t   nthreads = a->nthreads;
+    register float* output = a->output;
+    register float* sptPrice = a->sptPrice;
+    register float* strike = a->strike;
+    register float* rate = a->rate;
+    register float* volatility = a->volatility;
+    register float* otime = a->otime;
+    register char*  otype = a->otype;
+    register size_t num_stocks = a->num_stocks;
+    register size_t nthreads = a->nthreads;
 
     /* Create all threads */
     pthread_t tid[nthreads];

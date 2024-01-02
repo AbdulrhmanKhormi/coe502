@@ -46,6 +46,7 @@
 #include "impl/scalar.h"
 #include "impl/vec.h"
 #include "impl/para.h"
+#include "impl/vec-para.h"
 
 /* Include common headers */
 #include "../common/types.h"
@@ -78,6 +79,7 @@ int main(int argc, char** argv)
   void* (*impl_scalar_ptr  )(void* args) = impl_scalar;
   void* (*impl_vector_ptr  )(void* args) = impl_vector;
   void* (*impl_parallel_ptr)(void* args) = impl_parallel;
+  void* (*impl_vec_para_ptr)(void* args) = impl_vector_para;
 
   /* Chosen */
   void* (*impl)(void* args) = NULL;
@@ -96,6 +98,8 @@ int main(int argc, char** argv)
         impl = impl_vector_ptr  ; impl_str = "vectorized"  ;
       } else if (strcmp(argv[i], "para" ) == 0) {
         impl = impl_parallel_ptr; impl_str = "parallelized";
+      } else if (strcmp(argv[i], "vec-para" ) == 0) {
+        impl = impl_vec_para_ptr; impl_str = "vectorized-parallelized";
       } else {
         impl = NULL             ; impl_str = "unknown"     ;
 
@@ -179,7 +183,7 @@ int main(int argc, char** argv)
     printf("  %s {-i | --impl} impl_str [Options]\n", argv[0]);
     printf("  \n");
     printf("  Required:\n");
-    printf("    -i | --impl      Available implementations = {scalar, vec, para}\n");
+    printf("    -i | --impl      Available implementations = {scalar, vec, para, vec-para}\n");
     printf("    \n");
     printf("  Options:\n");
     printf("    -h | --help      Print this message\n");

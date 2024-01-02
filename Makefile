@@ -44,10 +44,13 @@ run-scalar:
 	./build/blackscholes -i scalar $(DATA)
 
 run-vec:
-	./build/blackscholes -i vec $(DATA) -n $(nThreads)
+	./build/blackscholes -i vec $(DATA)
 
 run-para:
 	./build/blackscholes -i para $(DATA) -n $(nThreads)
+
+run-vec-para:
+	./build/blackscholes -i vec-para $(DATA) -n $(nThreads)
 
 run-all: run-scalar run-para run-vec
 
